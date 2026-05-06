@@ -103,7 +103,7 @@ def create_list_obs(input_folder, prep_params, files=None, outfile=None):
     return list_obs
 
 
-def postprocessing(
+def postprocessing( #This function might be interessting to use
     nc_files,
     input_folder,
     IDs,
@@ -133,14 +133,14 @@ def postprocessing(
     f = 0
     if not isinstance(nc_files, list):
         nc_files = [nc_files]
-    data = Dataset(nc_files[f])
-    mod_time = num2date(data["time"][:], units=data["time"].units)
+    data = Dataset(nc_files[f])                                     # opens first nc file
+    mod_time = num2date(data["time"][:], units=data["time"].units) #nice date function
     lon = data["lon"][:].data
     lat = data["lat"][:].data
     previous_seed_number = 0
     new_seed_number = len(lon)
     print(f"{new_seed_number} seeds")
-    list_obs = create_list_obs(input_folder, prep_params, files=files, outfile=outfile)
+    list_obs = create_list_obs(input_folder, prep_params, files=files, outfile=outfile) #uses pre-processing which is hardcoded to obs column_names!!
     print(len(list_obs))
     # assert len(list_obs) == len(IDs)
     Matches = []
@@ -437,7 +437,7 @@ def polarplot(matches, outfile, SS=None):
     ax.set_yticklabels(radial_ticklabels)
     circle1 = plt.Circle((0, 0), 0.2, color="r")
     ax.add_patch(circle1)
-    if SS is None:
+    if SS is None: #What does this condition mean?
 
         mask1 = np.where(np.logical_or(R < 0.5, np.logical_and(R > 1.5, R <= 2)))[0]
         mask2 = np.where(np.logical_and(R >= 0.5, R <= 1.5))[0]
@@ -499,7 +499,7 @@ def polar_to_cartesian(theta, r):
     return x, y
 
 
-def polarplot2(matches, outfile, SS=None):
+def polarplot2(matches, outfile, SS=None): #USE! THIS ONE
     THETA = []
     R = []
     for match in matches:
@@ -535,7 +535,7 @@ def polarplot2(matches, outfile, SS=None):
     theta_avg_with_outsiders = circmean(THETA)
     print(theta_avg_with_outsiders, r_avg_with_outsiders, np.max(R))
     # print(len(SS),len(R))
-    outsiders = (R > 3).sum() / len(R) * 100
+    outsiders = (R > 3).sum() / len(R) * 100                 #why R<3, why 3?
     # Convert polar coordinates to Cartesian coordinates
     X, Y = polar_to_cartesian(np.pi / 2 - np.radians(THETA[R <= 3]), R[R <= 3])
     x_outsiders, y_outsiders = polar_to_cartesian(
@@ -581,7 +581,7 @@ def polarplot2(matches, outfile, SS=None):
     plt.show()
 
 
-def polarplot_contour(matches, outfile, c=0.2, SS=None):
+def polarplot_contour(matches, outfile, c=0.2, SS=None): #This should be the most up to date verison, USE!
     """Used to generate a polarplot from a list of matches
 
     Args:
@@ -844,7 +844,7 @@ def plot_current_map(data, outfolder, model):
     plt.show()
 
 
-def plot_ensemble_mean(ensemble_file, projection=None, **kwargs):
+def plot_ensemble_mean(ensemble_file, projection=None, **kwargs): #interessting, USE!
     # Open the NetCDF file using netCDF4.Dataset
     with Dataset(ensemble_file, mode="r") as data:
         # Extract longitude and latitude
