@@ -92,7 +92,7 @@ wind_models = {
 
 
 # columns = {0: "Latitude", 1: "Longitude", 2: "time"}  # 2021
-columns = {
+columns = { #for input csv files, USE!
     "LATITUDE": "Latitude",
     "LONGITUDE": "Longitude",
     "date": "time",
@@ -107,7 +107,7 @@ columns = {
 #     "ts_interp": 900,
 #     "No_column": True,
 # }  # 2021
-prep_params = {
+prep_params = { #for input csv files, USE!
     "column_names": columns,
     "date_format": "%Y-%m-%d %H:%M",
     "time_thresh": 7,
@@ -117,24 +117,24 @@ prep_params = {
 }  # 2011 2012 1990
 
 
-def multiseeding(
+def multiseeding(             #pre-defining function input types, USE!
     files: list[str],
     output_folder: str,
     prep_params: dict,
-    Clean: bool = False,
+    Clean: bool = False,        #define if output file shouldbe overritten if it already exists
     ocean_model: str = None,
     wind_model: str = None,
-    ts_calculation: int = 900,
-    ts_observation: int = 900,
+    ts_calculation: int = 900, #every 15min, this matches the observation frequnecy, but does it make sense input wise?
+    ts_observation: int = 900, #every 15min observations
     ts_output: int = 3600,
 ):
     if not os.path.exists(
-        os.path.join(output_folder, f"global_{ocean_model}_{wind_model}_run.nc")
+        os.path.join(output_folder, f"global_{ocean_model}_{wind_model}_run.nc") #Checks the directory if file exists, USE!
     ):
         o = OpenBerg(loglevel=20)
         for om in ocean_models[ocean_model]:
-            try:
-                readers_current = copernicusmarine.open_dataset(
+            try:                                                                  #Try copernicus, except url, USE!
+                readers_current = copernicusmarine.open_dataset(                  #Opens dataset, use lazy reader from list instead
                     dataset_id=om,
                     username=USERNAME,
                     password=PASSWORD,
@@ -143,7 +143,7 @@ def multiseeding(
                 readers_current = reader_netCDF_CF_generic.Reader(
                     readers_current,
                     standard_name_mapping={
-                        "eastward_sea_water_velocity": "x_sea_water_velocity",
+                        "eastward_sea_water_velocity": "x_sea_water_velocity",    #I think name mapping not needed here
                         "northward_sea_water_velocity": "y_sea_water_velocity",
                     },
                 )
@@ -162,13 +162,13 @@ def multiseeding(
                 break
 
         if not wind_model is None:
-            reader_wind = reader_netCDF_CF_generic.Reader(wind_models[wind_model])
+            reader_wind = reader_netCDF_CF_generic.Reader(wind_models[wind_model])        #Here we would need name mapping and correction
             o.add_reader(reader_wind)
 
-        o.set_config("environment:fallback:x_wind", 0)
+        o.set_config("environment:fallback:x_wind", 0)                                    #USE
         o.set_config("environment:fallback:y_wind", 0)
         o.set_config("drift:max_age_seconds", 86401)
-        o.set_config("environment:fallback:x_sea_water_velocity", None)
+        o.set_config("environment:fallback:x_sea_water_velocity", None)                   #default already, but USE to make independent of version
         o.set_config("environment:fallback:y_sea_water_velocity", None)
 
         for fp in files:
@@ -186,33 +186,33 @@ def multiseeding(
                 lat = df.loc[:, "Latitude"].values
                 date = df.index
 
-                Day0 = date[0] - timedelta(days=1)
+                Day0 = date[0] - timedelta(days=1)                                #Why go back one day? What does Day0 stand for?
                 for k, d in enumerate(date):
                     if d == Day0 + timedelta(days=1):
-                        o.seed_elements(lon[k], lat[k], d, z=0)
+                        o.seed_elements(lon[k], lat[k], d, z=0)                   # Seeds multiple icebergs on different days!
                         Day0 += timedelta(days=1)
 
         t1 = time()
         o.run(
             time_step=ts_calculation,
-            steps=50000,
+            steps=50000,                                                      # Set to 3 days or so instead
             time_step_output=ts_output,
             outfile=os.path.join(
                 output_folder, f"global_{ocean_model}_{wind_model}_run.nc"
             ),
-            export_variables=["time", "age_seconds", "lon", "lat"],
+            export_variables=["time", "age_seconds", "lon", "lat"],            #Only those variables output?
         )
         t2 = time()
-        print(t2 - t1)
+        print(t2 - t1)                                                #time spend on simulation
         o.plot(fast=True)
-    else:
+    else:  #refers to if file already exists
         print("the output file already exists")
         if Clean:
             print("Replacing the file")
             os.remove(
                 os.path.join(output_folder, f"global_{ocean_model}_{wind_model}_run.nc")
             )
-            multiseeding(
+            multiseeding(                 #calls function inside of function, recursive function is stopped when file exists and Clean=False, does it keep running when Clean=True?
                 files=files,
                 output_folder=output_folder,
                 prep_params=prep_params,
@@ -223,11 +223,11 @@ def multiseeding(
                 ts_output=ts_output,
             )
 
-    return os.listdir(input_folder)
+    return os.listdir(input_folder) #prints input folder
 
 
-files = [os.path.join(input_folder, f) for f in os.listdir(input_folder)]
-for wind_model in wind_models.keys():
+files = [os.path.join(input_folder, f) for f in os.listdir(input_folder)] 
+for wind_model in wind_models.keys():                              #runs simulations for all combintaions of wind and current input, nice and compact, USE!
     for ocean_model in ocean_models.keys():
         print(ocean_model, wind_model)
         multiseeding(
@@ -248,8 +248,8 @@ IDs = compute_IDs(
 )
 pprint(IDs)
 
-if not os.path.exists(os.path.join(output_folder, "SS_2021.csv")):
-    df2save = []
+if not os.path.exists(os.path.join(output_folder, "SS_2021.csv")): #corrects output names, not needed for me
+    df2save = []                                                   #also does prostproc, not sure
     for nc_f in os.listdir(output_folder):
         if ".nc" in nc_f:
             dummy = nc_f.split("_")
