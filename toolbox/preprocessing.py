@@ -56,7 +56,7 @@ def formatting(
     """
     if No_column:
         data = pd.read_csv(filename, sep=",", header=None)
-        data = data.rename(columns=column_names)
+        data = data.rename(columns=column_names)                 #hardcoded to column_names!
     else:
         data = pd.read_csv(filename, sep=",")
         data = data.rename(columns=column_names)
